@@ -19,7 +19,7 @@ namespace MistyORM.Database
 
         internal Db(string DatabaseName, DbServerInfo ServerInfo)
         {
-            ConnectionString = $"Server={ServerInfo.Host};User Id={ServerInfo.Username};Port={ServerInfo.Port};Password={ServerInfo.Password};Database={DatabaseName};Allow Zero Datetime=True;Pooling={ServerInfo.Pooling};CharSet=utf8;";
+            ConnectionString = $"Server={ServerInfo.Host};User Id={ServerInfo.Username};Port={ServerInfo.Port};Password={ServerInfo.Password};Database={DatabaseName};Pooling={ServerInfo.Pooling};CharSet=utf8;";
 
             if (ServerInfo.Pooling)
                 ConnectionString += $"Min Pool Size={ServerInfo.MinPoolSize};Max Pool Size={ServerInfo.MaxPoolSize}";

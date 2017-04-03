@@ -31,7 +31,7 @@ namespace MistyORM.Server
 
         public Db Database<T>() where T : DbEntity
         {
-            return DbStorage.GetOrAdd(typeof(T), new Db(typeof(T).GetType().Name, ServerInfo));
+            return DbStorage.GetOrAdd(typeof(T), new Db(typeof(T).Name, ServerInfo));
         }
     }
 }

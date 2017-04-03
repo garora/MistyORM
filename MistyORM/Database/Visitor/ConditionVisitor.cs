@@ -48,7 +48,8 @@ namespace MistyORM.Database.Visitor
 
         internal void Visit(Expression ExpressionBody)
         {
-            ConditionBuilder.Append("(");
+            if (ExpressionBody is LambdaExpression)
+                ExpressionBody = (ExpressionBody as LambdaExpression).Body;
 
             switch (GetVisitDispatcher(ExpressionBody))
             {
@@ -67,11 +68,15 @@ namespace MistyORM.Database.Visitor
                 {
                     BinaryExpression Expression = ExpressionBody as BinaryExpression;
 
+                    ConditionBuilder.Append("(");
+
                     Visit(Expression.Left);
 
                     ConditionBuilder.Append(ExpressionTypeMap[ExpressionBody.NodeType]);
 
                     Visit(Expression.Right);
+
+                    ConditionBuilder.Append(")");
                     break;
                 }
                 case VisitType.Member:
@@ -91,16 +96,7 @@ namespace MistyORM.Database.Visitor
                     AppendParameter((Expression.Value ?? string.Empty).ToString());
                     break;
                 }
-                case VisitType.Call:
-                {
-                    Func<object> LambdaExpression = Expression.Lambda<Func<object>>(Expression.Convert(ExpressionBody, typeof(object))).Compile();
-
-                    AppendParameter(ToDbFormat(LambdaExpression()));
-                    break;
-                }
             }
-
-            ConditionBuilder.Append(")");
 
             Visited = true;
         }
@@ -167,8 +163,6 @@ namespace MistyORM.Database.Visitor
                     return VisitType.Member;
                 case ExpressionType.Constant:
                     return VisitType.Constant;
-                case ExpressionType.Call:
-                    return VisitType.Call;
                 default:
                     throw new NotSupportedException($"{Expression.NodeType} is not supported.");
             }
