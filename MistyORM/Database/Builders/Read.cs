@@ -27,7 +27,7 @@ namespace MistyORM.Database.Builders
         {
             StringBuilder Builder = new StringBuilder();
 
-            Builder.Append($"SELECT {string.Join(", ", typeof(T).GetProperties().Select(x => $"`{x.Name}`"))} FROM `{typeof(T).Name}`");
+            Builder.Append($"SELECT {string.Join(", ", typeof(T).GetEntityProperties().Select(x => $"`{x.Name}`"))} FROM `{typeof(T).Name}`");
 
             if (Visitor.Visited)
                 Builder.Append($" WHERE {Visitor.Conditions}");
@@ -41,7 +41,7 @@ namespace MistyORM.Database.Builders
         {
             StringBuilder Builder = new StringBuilder();
 
-            Builder.Append($"SELECT {string.Join(", ", typeof(T).GetProperties().Select(x => $"`{x.Name}`"))} FROM `{typeof(T).Name}`");
+            Builder.Append($"SELECT {string.Join(", ", typeof(T).GetEntityProperties().Select(x => $"`{x.Name}`"))} FROM `{typeof(T).Name}`");
 
             if (Visitor.Visited)
                 Builder.Append($" WHERE {Visitor.Conditions}");

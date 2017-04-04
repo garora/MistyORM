@@ -12,7 +12,7 @@ namespace MistyORM.Entities.Builder
         {
             List<T> Result = new List<T>();
 
-            PropertyInfo[] Properties = typeof(T).GetProperties();
+            PropertyInfo[] Properties = typeof(T).GetEntityProperties();
 
             while (Reader.Read())
             {

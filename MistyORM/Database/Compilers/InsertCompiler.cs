@@ -5,27 +5,23 @@ using System.Reflection;
 
 using MySql.Data.MySqlClient;
 
-using MistyORM.Entities;
 using MistyORM.Entities.Attributes;
 using MistyORM.Miscellaneous;
 
 namespace MistyORM.Database.Compilers
 {
-    internal class ParameterCompiler
+    internal class InsertCompiler : ICompiler
     {
         private readonly Dictionary<string, DbParameter> FieldParameterHolder;
 
-        internal DbParameter[] Parameters => FieldParameterHolder.Values.ToArray();
-        internal string[] Fields => FieldParameterHolder.Keys.ToArray();
-
-        internal ParameterCompiler()
+        internal InsertCompiler()
         {
             FieldParameterHolder = new Dictionary<string, DbParameter>();
         }
 
-        internal void Compile<T>(T Item) where T : TableEntity
+        void ICompiler.Compile<T>(T Item)
         {
-            PropertyInfo[] Properties = typeof(T).GetProperties().Where(x => x.GetCustomAttribute<AutoIncrementAttribute>() == null).ToArray();
+            PropertyInfo[] Properties = typeof(T).GetEntityProperties().Where(x => x.GetCustomAttribute<AutoIncrementAttribute>() == null).ToArray();
 
             for (int i = 1; i <= Properties.Length; ++i)
             {
@@ -38,5 +34,9 @@ namespace MistyORM.Database.Compilers
                 });
             }
         }
+
+        string[] ICompiler.GetFields() => FieldParameterHolder.Keys.ToArray();
+
+        DbParameter[] ICompiler.GetParameters() => FieldParameterHolder.Values.ToArray();
     }
 }

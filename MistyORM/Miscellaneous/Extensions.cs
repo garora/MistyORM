@@ -6,7 +6,7 @@ namespace MistyORM.Miscellaneous
 {
     internal static class Extensions
     {
-        internal static PropertyInfo[] GetProperties(this Type Type)
+        internal static PropertyInfo[] GetEntityProperties(this Type Type)
         {
             return Type.GetRuntimeProperties().Where(x => !x.GetMethod.IsVirtual).ToArray();
         }
