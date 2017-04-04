@@ -4,6 +4,6 @@ namespace MistyORM
 {
     public sealed class ORM
     {
-        public static DbServer CreateServerObject(DbServerInfo Info) => new DbServer(Info);
+        public static DbServer CreateServer(DbServerInfo Info) => new DbServer(Info);
     }
 }

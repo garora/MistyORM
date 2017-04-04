@@ -13,7 +13,8 @@ namespace MistyORM.Database
     public partial class Db
     {
         private readonly string ConnectionString;
-        private readonly ILog Log;
+
+        private readonly ILogger Logger;
 
         public bool IsInitialized { get; private set; }
 
@@ -24,7 +25,7 @@ namespace MistyORM.Database
             if (ServerInfo.Pooling)
                 ConnectionString += $"Min Pool Size={ServerInfo.MinPoolSize};Max Pool Size={ServerInfo.MaxPoolSize}";
 
-            Log = new Log();
+            Logger = new ConsoleLogger();
 
             IsInitialized = CreateConnection().State == ConnectionState.Open;
         }
@@ -39,7 +40,7 @@ namespace MistyORM.Database
             return Connection;
         }
 
-        private DbCommand CreateCommand(DbConnection Connection, string Sql, MySqlParameter[] Parameters)
+        private DbCommand CreateCommand(DbConnection Connection, string Sql, DbParameter[] Parameters)
         {
             DbCommand Command = new MySqlCommand();
 
@@ -52,7 +53,7 @@ namespace MistyORM.Database
             return Command;
         }
 
-        internal async Task<bool> ExecuteAsync(string Sql, MySqlParameter[] Parameters)
+        private async Task<bool> ExecuteAsync(string Sql, DbParameter[] Parameters)
         {
             try
             {
@@ -61,12 +62,12 @@ namespace MistyORM.Database
             }
             catch (Exception e)
             {
-                Log.Out(e.ToString());
+                Logger.Out(e.ToString());
                 return false;
             }
         }
 
-        internal async Task<DbDataReader> SelectAsync(string Sql, MySqlParameter[] Parameters)
+        private async Task<DbDataReader> SelectAsync(string Sql, DbParameter[] Parameters)
         {
             try
             {
@@ -75,8 +76,22 @@ namespace MistyORM.Database
             }
             catch (Exception e)
             {
-                Log.Out(e.ToString());
+                Logger.Out(e.ToString());
                 return null;
+            }
+        }
+
+        private async Task<int> InsertAsync(string Sql, DbParameter[] Parameters)
+        {
+            try
+            {
+                using (DbCommand Command = CreateCommand(CreateConnection(), Sql + " SELECT LAST_INSERT_ID();", Parameters))
+                    return Convert.ToInt32(await Command.ExecuteScalarAsync());
+            }
+            catch (Exception e)
+            {
+                Logger.Out(e.ToString());
+                return -1;
             }
         }
     }

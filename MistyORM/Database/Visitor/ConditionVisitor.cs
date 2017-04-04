@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
@@ -18,14 +19,15 @@ namespace MistyORM.Database.Visitor
         Call = 5
     }
 
-    public class ConditionVisitor
+    internal class ConditionVisitor
     {
-        internal MySqlParameter[] Parameters => ParameterHolder.ToArray();
-        private readonly List<MySqlParameter> ParameterHolder;
+        private readonly List<DbParameter> ParameterHolder;
         private int ParameterCounter;
 
-        internal string Conditions => ConditionBuilder.ToString();
         private readonly StringBuilder ConditionBuilder;
+
+        internal DbParameter[] Parameters => ParameterHolder.ToArray();
+        internal string Conditions => ConditionBuilder.ToString();
 
         internal bool Visited { get; private set; }
 
@@ -38,7 +40,7 @@ namespace MistyORM.Database.Visitor
 
         internal ConditionVisitor()
         {
-            ParameterHolder = new List<MySqlParameter>();
+            ParameterHolder = new List<DbParameter>();
             ParameterCounter = 1;
 
             ConditionBuilder = new StringBuilder();
