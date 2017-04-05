@@ -1,6 +1,6 @@
 namespace MistyORM.Logging
 {
-    public interface ILogger
+    internal interface ILogger
     {
         void Out(string Message);
     }

@@ -1,55 +1,44 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
 using MySql.Data.MySqlClient;
 
-namespace MistyORM.Database.Visitor
+namespace MistyORM.Database.Compilers
 {
-    public enum VisitType
+    internal class ConditionCompiler : CompilerBase
     {
-        None = 0,
-        Unary = 1,
-        Binary = 2,
-        Member = 3,
-        Constant = 4,
-        Call = 5
-    }
+        private readonly StringBuilder ConditionBuilder;
+        internal string ToConditions() => ConditionBuilder.ToString();
 
-    internal class ConditionVisitor
-    {
-        private readonly List<DbParameter> ParameterHolder;
         private int ParameterCounter;
 
-        private readonly StringBuilder ConditionBuilder;
+        internal bool Compiled;
 
-        internal DbParameter[] Parameters => ParameterHolder.ToArray();
-        internal string Conditions => ConditionBuilder.ToString();
-
-        internal bool Visited { get; private set; }
-
-        private static readonly Dictionary<ExpressionType, string> ExpressionTypeMap = new Dictionary<ExpressionType, string>() 
+        private static readonly Dictionary<ExpressionType, string> ExpressionTypeMap = new Dictionary<ExpressionType, string>()
         {
             { ExpressionType.AndAlso, " AND " },
             { ExpressionType.OrElse, " OR " },
             { ExpressionType.Equal, " = " }
         };
 
-        internal ConditionVisitor()
+        internal ConditionCompiler()
         {
-            ParameterHolder = new List<DbParameter>();
-            ParameterCounter = 1;
+            FieldParameterHolder = new Dictionary<string, DbParameter>();
 
+            Compiled = false;
             ConditionBuilder = new StringBuilder();
-
-            Visited = false;
+            ParameterCounter = 1;
         }
 
-        internal void Visit(Expression ExpressionBody)
+        internal override void Compile<T>(T Item)
         {
+            Expression ExpressionBody = Item as Expression;
+
             if (ExpressionBody is LambdaExpression)
                 ExpressionBody = (ExpressionBody as LambdaExpression).Body;
 
@@ -61,7 +50,7 @@ namespace MistyORM.Database.Visitor
 
                     ConditionBuilder.Append("NOT (");
 
-                    Visit(Expression.Operand);
+                    Compile(Expression.Operand);
 
                     ConditionBuilder.Append(")");
                     break;
@@ -72,11 +61,11 @@ namespace MistyORM.Database.Visitor
 
                     ConditionBuilder.Append("(");
 
-                    Visit(Expression.Left);
+                    Compile(Expression.Left);
 
                     ConditionBuilder.Append(ExpressionTypeMap[ExpressionBody.NodeType]);
 
-                    Visit(Expression.Right);
+                    Compile(Expression.Right);
 
                     ConditionBuilder.Append(")");
                     break;
@@ -100,7 +89,7 @@ namespace MistyORM.Database.Visitor
                 }
             }
 
-            Visited = true;
+            Compiled = true;
         }
 
         private string GetMemberExpressionValue(MemberExpression Expression)
@@ -126,7 +115,7 @@ namespace MistyORM.Database.Visitor
             FieldInfo FieldInfo = Member as FieldInfo;
             PropertyInfo PropertyInfo = Member as PropertyInfo;
 
-            return ToDbFormat(FieldInfo?.GetValue(Reference) ?? PropertyInfo.GetValue(Reference), FieldInfo?.FieldType ?? PropertyInfo.PropertyType); 
+            return ToDbFormat(FieldInfo?.GetValue(Reference) ?? PropertyInfo.GetValue(Reference), FieldInfo?.FieldType ?? PropertyInfo.PropertyType);
         }
 
         private string ToDbFormat(object Input, Type Type = null)
@@ -142,7 +131,7 @@ namespace MistyORM.Database.Visitor
         private void AppendParameter(string Value)
         {
             ConditionBuilder.Append($"@{ParameterCounter}");
-            ParameterHolder.Add(new MySqlParameter
+            FieldParameterHolder.Add(ParameterCounter.ToString(), new MySqlParameter
             {
                 ParameterName = "@" + ParameterCounter,
                 Value = Value
@@ -168,6 +157,16 @@ namespace MistyORM.Database.Visitor
                 default:
                     throw new NotSupportedException($"{Expression.NodeType} is not supported.");
             }
+        }
+
+        private enum VisitType
+        {
+            None = 0,
+            Unary = 1,
+            Binary = 2,
+            Member = 3,
+            Constant = 4,
+            Call = 5
         }
     }
 }

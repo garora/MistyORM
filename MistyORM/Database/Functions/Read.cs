@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 using MistyORM.Database.Builders;
-using MistyORM.Database.Visitor;
+using MistyORM.Database.Compilers;
 using MistyORM.Entities;
 using MistyORM.Entities.Builder;
 
@@ -14,24 +14,24 @@ namespace MistyORM.Database
     {
         public async Task<bool> Any<T>(Expression<Func<T, bool>> Expression = null) where T : TableEntity
         {
-            ConditionVisitor Visitor = new ConditionVisitor();
+            ConditionCompiler Compiler = new ConditionCompiler();
 
             if (Expression != null)
-                Visitor.Visit(Expression);
+                Compiler.Compile(Expression);
 
-            DbDataReader Reader = await SelectAsync(QueryBuilder.Count<T>(Visitor), Visitor.Parameters);
+            DbDataReader Reader = await SelectAsync(QueryBuilder.Count<T>(Compiler), Compiler.GetParameters());
 
             return Reader.HasRows;
         }
 
         public async Task<uint> Count<T>(Expression<Func<T, bool>> Expression = null) where T : TableEntity
         {
-            ConditionVisitor Visitor = new ConditionVisitor();
+            ConditionCompiler Compiler = new ConditionCompiler();
 
             if (Expression != null)
-                Visitor.Visit(Expression);
+                Compiler.Compile(Expression);
 
-            DbDataReader Reader = await SelectAsync(QueryBuilder.Count<T>(Visitor), Visitor.Parameters);
+            DbDataReader Reader = await SelectAsync(QueryBuilder.Count<T>(Compiler), Compiler.GetParameters());
 
             await Reader.ReadAsync();
 
@@ -40,34 +40,34 @@ namespace MistyORM.Database
 
         public async Task<T> First<T>(Expression<Func<T, bool>> Expression = null) where T : TableEntity, new()
         {
-            ConditionVisitor Visitor = new ConditionVisitor();
+            ConditionCompiler Compiler = new ConditionCompiler();
 
             if (Expression != null)
-                Visitor.Visit(Expression);
+                Compiler.Compile(Expression);
 
-            T[] Result = EntityBuilder.Create<T>(await SelectAsync(QueryBuilder.First<T>(Visitor), Visitor.Parameters));
+            T[] Result = EntityBuilder.Create<T>(await SelectAsync(QueryBuilder.First<T>(Compiler), Compiler.GetParameters()));
 
             return Result.Length > 0 ? Result[0] : null;
         }
 
         public async Task<T[]> Select<T>(Expression<Func<T, bool>> Expression = null) where T : TableEntity, new()
         {
-            ConditionVisitor Visitor = new ConditionVisitor();
+            ConditionCompiler Compiler = new ConditionCompiler();
 
             if (Expression != null)
-                Visitor.Visit(Expression);
+                Compiler.Compile(Expression);
 
-            return EntityBuilder.Create<T>(await SelectAsync(QueryBuilder.Select<T>(Visitor), Visitor.Parameters));
+            return EntityBuilder.Create<T>(await SelectAsync(QueryBuilder.Select<T>(Compiler), Compiler.GetParameters()));
         }
 
         public async Task<T> Single<T>(Expression<Func<T, bool>> Expression = null) where T : TableEntity, new()
         {
-            ConditionVisitor Visitor = new ConditionVisitor();
+            ConditionCompiler Compiler = new ConditionCompiler();
 
             if (Expression != null)
-                Visitor.Visit(Expression);
+                Compiler.Compile(Expression);
 
-            T[] Result = EntityBuilder.Create<T>(await SelectAsync(QueryBuilder.Select<T>(Visitor), Visitor.Parameters));
+            T[] Result = EntityBuilder.Create<T>(await SelectAsync(QueryBuilder.Select<T>(Compiler), Compiler.GetParameters()));
             
             return Result.Length != 1 ? null : Result[0];
         }

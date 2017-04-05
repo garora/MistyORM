@@ -4,15 +4,13 @@ using System.Reflection;
 using System.Text;
 
 using MistyORM.Database.Compilers;
-using MistyORM.Database.Visitor;
 using MistyORM.Entities;
-using MistyORM.Miscellaneous;
 
 namespace MistyORM.Database.Builders
 {
     internal static partial class QueryBuilder
     {
-        internal static string Insert<T>(ICompiler Compiler) where T : TableEntity
+        internal static string Insert<T>(CompilerBase Compiler) where T : TableEntity
         {
             StringBuilder Builder = new StringBuilder();
 
@@ -21,7 +19,7 @@ namespace MistyORM.Database.Builders
             return Builder.ToString();
         }
 
-        internal static string Delete<T>(ICompiler Compiler) where T : TableEntity
+        internal static string Delete<T>(CompilerBase Compiler) where T : TableEntity
         {
             StringBuilder Builder = new StringBuilder();
 
@@ -30,11 +28,11 @@ namespace MistyORM.Database.Builders
             return Builder.ToString();
         }
 
-        internal static string Delete<T>(ConditionVisitor Visitor) where T : TableEntity
+        internal static string Delete<T>(ConditionCompiler Compiler) where T : TableEntity
         {
             StringBuilder Builder = new StringBuilder();
 
-            Builder.Append($"DELETE FROM `{typeof(T).Name}` WHERE {Visitor.Conditions};");
+            Builder.Append($"DELETE FROM `{typeof(T).Name}` WHERE {Compiler.ToConditions()};");
 
             return Builder.ToString();
         }

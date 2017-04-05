@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
 using System.Threading.Tasks;
 
 using MySql.Data.MySqlClient;
@@ -13,10 +15,7 @@ namespace MistyORM.Database
     public partial class Db
     {
         private readonly string ConnectionString;
-
         private readonly ILogger Logger;
-
-        public bool IsInitialized { get; private set; }
 
         internal Db(string DatabaseName, DbServerInfo ServerInfo)
         {
@@ -26,8 +25,6 @@ namespace MistyORM.Database
                 ConnectionString += $"Min Pool Size={ServerInfo.MinPoolSize};Max Pool Size={ServerInfo.MaxPoolSize}";
 
             Logger = new ConsoleLogger();
-
-            IsInitialized = CreateConnection().State == ConnectionState.Open;
         }
 
         private DbConnection CreateConnection()
@@ -40,7 +37,7 @@ namespace MistyORM.Database
             return Connection;
         }
 
-        private DbCommand CreateCommand(DbConnection Connection, string Sql, DbParameter[] Parameters)
+        private DbCommand CreateCommand(DbConnection Connection, string Sql, IEnumerable<DbParameter> Parameters)
         {
             DbCommand Command = new MySqlCommand();
 
@@ -48,12 +45,12 @@ namespace MistyORM.Database
             Command.Connection = Connection;
             Command.CommandTimeout = 30;
 
-            Command.Parameters.AddRange(Parameters);
+            Command.Parameters.AddRange(Parameters.ToArray());
 
             return Command;
         }
 
-        private async Task<bool> ExecuteAsync(string Sql, DbParameter[] Parameters)
+        private async Task<bool> ExecuteAsync(string Sql, IEnumerable<DbParameter> Parameters)
         {
             try
             {
@@ -67,7 +64,7 @@ namespace MistyORM.Database
             }
         }
 
-        private async Task<DbDataReader> SelectAsync(string Sql, DbParameter[] Parameters)
+        private async Task<DbDataReader> SelectAsync(string Sql, IEnumerable<DbParameter> Parameters)
         {
             try
             {
@@ -81,7 +78,7 @@ namespace MistyORM.Database
             }
         }
 
-        private async Task<int> InsertAsync(string Sql, DbParameter[] Parameters)
+        private async Task<int> InsertAsync(string Sql, IEnumerable<DbParameter> Parameters)
         {
             try
             {

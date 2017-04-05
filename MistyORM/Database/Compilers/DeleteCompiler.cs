@@ -1,31 +1,28 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Reflection;
 
 using MySql.Data.MySqlClient;
 
-using MistyORM.Entities;
 using MistyORM.Entities.Attributes;
 using MistyORM.Miscellaneous;
-using System;
 
 namespace MistyORM.Database.Compilers
 {
-    internal class DeleteCompiler : ICompiler
+    internal class DeleteCompiler : CompilerBase
     {
-        private readonly Dictionary<string, DbParameter> FieldParameterHolder;
-
         internal DeleteCompiler()
         {
             FieldParameterHolder = new Dictionary<string, DbParameter>();
         }
 
-        void ICompiler.Compile<T>(T Item)
+        internal override void Compile<T>(T Item)
         {
-            PropertyInfo PrimaryProperty = typeof(T).GetEntityProperties().SingleOrDefault(x => x.GetCustomAttribute<PrimaryKeyAttribute>() != null);
+            PropertyInfo PrimaryProperty = typeof(T).GetEntityProperties().SingleOrDefault(x => x.HasAttribute<PrimaryKeyAttribute>());
             if (PrimaryProperty == null)
-                throw new NullReferenceException($"Entity '{typeof(T).Name}' has no primary key set.");
+                throw new NullReferenceException($"Entity '{typeof(T).Name}' has no or multiple primary key set.");
 
             FieldParameterHolder.Add(PrimaryProperty.Name, new MySqlParameter
             {
@@ -33,9 +30,5 @@ namespace MistyORM.Database.Compilers
                 Value = PrimaryProperty.GetValue(Item)
             });
         }
-
-        string[] ICompiler.GetFields() => FieldParameterHolder.Keys.ToArray();
-
-        DbParameter[] ICompiler.GetParameters() => FieldParameterHolder.Values.ToArray();
     }
 }

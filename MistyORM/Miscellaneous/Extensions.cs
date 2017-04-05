@@ -8,7 +8,12 @@ namespace MistyORM.Miscellaneous
     {
         internal static PropertyInfo[] GetEntityProperties(this Type Type)
         {
-            return Type.GetRuntimeProperties().Where(x => !x.GetMethod.IsVirtual).ToArray();
+            return Type.GetTypeInfo().GetProperties().Where(x => !x.GetMethod.IsVirtual).ToArray();
+        }
+
+        internal static bool HasAttribute<T>(this PropertyInfo Info) where T : Attribute
+        {
+            return Info.GetCustomAttribute<T>() != null;
         }
     }
 }

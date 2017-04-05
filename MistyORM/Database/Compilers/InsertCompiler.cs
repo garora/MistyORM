@@ -10,18 +10,16 @@ using MistyORM.Miscellaneous;
 
 namespace MistyORM.Database.Compilers
 {
-    internal class InsertCompiler : ICompiler
+    internal class InsertCompiler : CompilerBase
     {
-        private readonly Dictionary<string, DbParameter> FieldParameterHolder;
-
         internal InsertCompiler()
         {
             FieldParameterHolder = new Dictionary<string, DbParameter>();
         }
 
-        void ICompiler.Compile<T>(T Item)
+        internal override void Compile<T>(T Item)
         {
-            PropertyInfo[] Properties = typeof(T).GetEntityProperties().Where(x => x.GetCustomAttribute<AutoIncrementAttribute>() == null).ToArray();
+            PropertyInfo[] Properties = typeof(T).GetEntityProperties().Where(x => !x.HasAttribute<AutoIncrementAttribute>()).ToArray();
 
             for (int i = 1; i <= Properties.Length; ++i)
             {
@@ -34,9 +32,5 @@ namespace MistyORM.Database.Compilers
                 });
             }
         }
-
-        string[] ICompiler.GetFields() => FieldParameterHolder.Keys.ToArray();
-
-        DbParameter[] ICompiler.GetParameters() => FieldParameterHolder.Values.ToArray();
     }
 }
