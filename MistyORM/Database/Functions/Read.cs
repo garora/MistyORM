@@ -19,7 +19,7 @@ namespace MistyORM.Database
             if (Expression != null)
                 Compiler.Compile(Expression);
 
-            DbDataReader Reader = await SelectAsync(QueryBuilder.Count<T>(Compiler), Compiler.GetParameters());
+            DbDataReader Reader = await SelectAsync(QueryBuilder.Count<T>(Expression != null ? Compiler : null), Compiler.ToParameters());
 
             return Reader.HasRows;
         }
@@ -31,7 +31,7 @@ namespace MistyORM.Database
             if (Expression != null)
                 Compiler.Compile(Expression);
 
-            DbDataReader Reader = await SelectAsync(QueryBuilder.Count<T>(Compiler), Compiler.GetParameters());
+            DbDataReader Reader = await SelectAsync(QueryBuilder.Count<T>(Expression != null ? Compiler : null), Compiler.ToParameters());
 
             await Reader.ReadAsync();
 
@@ -45,7 +45,7 @@ namespace MistyORM.Database
             if (Expression != null)
                 Compiler.Compile(Expression);
 
-            T[] Result = EntityBuilder.Create<T>(await SelectAsync(QueryBuilder.First<T>(Compiler), Compiler.GetParameters()));
+            T[] Result = EntityBuilder.Create<T>(await SelectAsync(QueryBuilder.First<T>(Expression != null ? Compiler : null), Compiler.ToParameters()));
 
             return Result.Length > 0 ? Result[0] : null;
         }
@@ -57,7 +57,7 @@ namespace MistyORM.Database
             if (Expression != null)
                 Compiler.Compile(Expression);
 
-            return EntityBuilder.Create<T>(await SelectAsync(QueryBuilder.Select<T>(Compiler), Compiler.GetParameters()));
+            return EntityBuilder.Create<T>(await SelectAsync(QueryBuilder.Select<T>(Expression != null ? Compiler : null), Compiler.ToParameters()));
         }
 
         public async Task<T> Single<T>(Expression<Func<T, bool>> Expression = null) where T : TableEntity, new()
@@ -67,7 +67,7 @@ namespace MistyORM.Database
             if (Expression != null)
                 Compiler.Compile(Expression);
 
-            T[] Result = EntityBuilder.Create<T>(await SelectAsync(QueryBuilder.Select<T>(Compiler), Compiler.GetParameters()));
+            T[] Result = EntityBuilder.Create<T>(await SelectAsync(QueryBuilder.Select<T>(Expression != null ? Compiler : null), Compiler.ToParameters()));
             
             return Result.Length != 1 ? null : Result[0];
         }

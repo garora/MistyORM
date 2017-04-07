@@ -14,7 +14,7 @@ namespace MistyORM.Database.Builders
         {
             StringBuilder Builder = new StringBuilder();
 
-            Builder.Append($"INSERT INTO `{typeof(T).Name}` ({string.Join(", ", Compiler.GetFields().Select(x => $"`{x}`"))}) VALUES ({string.Join(", ", Compiler.GetParameters().Select(x => x.ParameterName))});");
+            Builder.Append($"INSERT INTO `{typeof(T).Name}` ({Compiler.ToMemberFields()}) VALUES ({Compiler.ToMemberValues()});");
 
             return Builder.ToString();
         }
@@ -23,7 +23,7 @@ namespace MistyORM.Database.Builders
         {
             StringBuilder Builder = new StringBuilder();
 
-            Builder.Append($"DELETE FROM `{typeof(T).Name}` WHERE `{Compiler.GetFields().First()}` = @1;");
+            Builder.Append($"DELETE FROM `{typeof(T).Name}` WHERE {Compiler.ToConditionValues()};");
 
             return Builder.ToString();
         }
@@ -32,7 +32,16 @@ namespace MistyORM.Database.Builders
         {
             StringBuilder Builder = new StringBuilder();
 
-            Builder.Append($"DELETE FROM `{typeof(T).Name}` WHERE {Compiler.ToConditions()};");
+            Builder.Append($"DELETE FROM `{typeof(T).Name}` WHERE {Compiler.ToConditionValues()};");
+
+            return Builder.ToString();
+        }
+
+        internal static string Update<T>(CompilerBase Compiler) where T : TableEntity
+        {
+            StringBuilder Builder = new StringBuilder();
+
+            Builder.Append($"UPDATE `{typeof(T).Name}` SET {Compiler.ToMemberValues()} WHERE {Compiler.ToConditionValues()};");
 
             return Builder.ToString();
         }

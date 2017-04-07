@@ -20,7 +20,7 @@ namespace MistyORM.Database
 
             Compiler.Compile(Item);
 
-            int ScalarResult = await InsertAsync(QueryBuilder.Insert<T>(Compiler), Compiler.GetParameters());
+            int ScalarResult = await InsertAsync(QueryBuilder.Insert<T>(Compiler), Compiler.ToParameters());
 
             PropertyInfo AutoIncrementProperty = typeof(T).GetEntityProperties().SingleOrDefault(x => x.GetCustomAttribute<AutoIncrementAttribute>() != null);
             if (AutoIncrementProperty != null)
@@ -33,7 +33,7 @@ namespace MistyORM.Database
 
             Compiler.Compile(Item);
 
-            return await ExecuteAsync(QueryBuilder.Delete<T>(Compiler), Compiler.GetParameters());
+            return await ExecuteAsync(QueryBuilder.Delete<T>(Compiler), Compiler.ToParameters());
         }
 
         public async Task<bool> Delete<T>(Expression<Func<T, bool>> Expression) where T : TableEntity
@@ -42,7 +42,16 @@ namespace MistyORM.Database
 
             Compiler.Compile(Expression);
 
-            return await ExecuteAsync(QueryBuilder.Delete<T>(Compiler), Compiler.GetParameters());
+            return await ExecuteAsync(QueryBuilder.Delete<T>(Compiler), Compiler.ToParameters());
+        }
+
+        public async Task<bool> Update<T>(T Item) where T : TableEntity
+        {
+            CompilerBase Compiler = new UpdateCompiler();
+
+            Compiler.Compile(Item);
+
+            return await ExecuteAsync(QueryBuilder.Update<T>(Compiler), Compiler.ToParameters());
         }
     }
 }

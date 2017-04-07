@@ -11,9 +11,9 @@ using MistyORM.Miscellaneous;
 
 namespace MistyORM.Database.Compilers
 {
-    internal class DeleteCompiler : CompilerBase
+    internal class UpdateCompiler : CompilerBase
     {
-        internal DeleteCompiler() : base()
+        internal UpdateCompiler() : base()
         {
         }
 
@@ -28,6 +28,19 @@ namespace MistyORM.Database.Compilers
                 ParameterName = "1",
                 Value = PrimaryProperty.GetValue(Item)
             }, ParameterType.Condition);
+
+            PropertyInfo[] Properties = typeof(T).GetEntityProperties().Where(x => !x.HasAttribute<PrimaryKeyAttribute>() && !x.HasAttribute<AutoIncrementAttribute>()).ToArray();
+
+            for (int i = 1; i <= Properties.Length; ++i)
+            {
+                PropertyInfo Property = Properties[i - 1];
+
+                AddParameter(Property.Name, new MySqlParameter
+                {
+                    ParameterName = i.ToString(),
+                    Value = Property.GetValue(Item)
+                }, ParameterType.Member);
+            }
         }
     }
 }

@@ -12,9 +12,8 @@ namespace MistyORM.Database.Compilers
 {
     internal class InsertCompiler : CompilerBase
     {
-        internal InsertCompiler()
+        internal InsertCompiler() : base()
         {
-            FieldParameterHolder = new Dictionary<string, DbParameter>();
         }
 
         internal override void Compile<T>(T Item)
@@ -25,11 +24,11 @@ namespace MistyORM.Database.Compilers
             {
                 PropertyInfo Property = Properties[i - 1];
 
-                FieldParameterHolder.Add(Property.Name, new MySqlParameter
+                AddParameter(Property.Name, new MySqlParameter
                 {
-                    ParameterName = "@" + i,
+                    ParameterName = i.ToString(),
                     Value = Property.GetValue(Item)
-                });
+                }, ParameterType.Member);
             }
         }
     }

@@ -15,8 +15,8 @@ namespace MistyORM.Database.Builders
 
             Builder.Append($"SELECT COUNT(*) FROM `{typeof(T).Name}`");
 
-            if (Compiler.Compiled)
-                Builder.Append($" WHERE {Compiler.ToConditions()}");
+            if (Compiler != null)
+                Builder.Append($" WHERE {Compiler.ToConditionValues()}");
             
             Builder.Append(";");
 
@@ -27,10 +27,10 @@ namespace MistyORM.Database.Builders
         {
             StringBuilder Builder = new StringBuilder();
 
-            Builder.Append($"SELECT {string.Join(", ", typeof(T).GetEntityProperties().Select(x => $"`{x.Name}`"))} FROM `{typeof(T).Name}`");
+            Builder.Append($"SELECT * FROM `{typeof(T).Name}`");
 
-            if (Compiler.Compiled)
-                Builder.Append($" WHERE {Compiler.ToConditions()}");
+            if (Compiler != null)
+                Builder.Append($" WHERE {Compiler.ToConditionValues()}");
             
             Builder.Append(" LIMIT 0, 1;");
 
@@ -41,10 +41,10 @@ namespace MistyORM.Database.Builders
         {
             StringBuilder Builder = new StringBuilder();
 
-            Builder.Append($"SELECT {string.Join(", ", typeof(T).GetEntityProperties().Select(x => $"`{x.Name}`"))} FROM `{typeof(T).Name}`");
+            Builder.Append($"SELECT * FROM `{typeof(T).Name}`");
 
-            if (Compiler.Compiled)
-                Builder.Append($" WHERE {Compiler.ToConditions()}");
+            if (Compiler != null)
+                Builder.Append($" WHERE {Compiler.ToConditionValues()}");
 
             Builder.Append(";");
 

@@ -13,11 +13,9 @@ namespace MistyORM.Database.Compilers
     internal class ConditionCompiler : CompilerBase
     {
         private readonly StringBuilder ConditionBuilder;
-        internal string ToConditions() => ConditionBuilder.ToString();
+        internal new string ToConditionValues() => ConditionBuilder.ToString();
 
         private int ParameterCounter;
-
-        internal bool Compiled;
 
         private static readonly Dictionary<ExpressionType, string> ExpressionTypeMap = new Dictionary<ExpressionType, string>()
         {
@@ -26,11 +24,8 @@ namespace MistyORM.Database.Compilers
             { ExpressionType.Equal, " = " }
         };
 
-        internal ConditionCompiler()
+        internal ConditionCompiler() : base()
         {
-            FieldParameterHolder = new Dictionary<string, DbParameter>();
-
-            Compiled = false;
             ConditionBuilder = new StringBuilder();
             ParameterCounter = 1;
         }
@@ -88,8 +83,6 @@ namespace MistyORM.Database.Compilers
                     break;
                 }
             }
-
-            Compiled = true;
         }
 
         private string GetMemberExpressionValue(MemberExpression Expression)
@@ -108,14 +101,14 @@ namespace MistyORM.Database.Compilers
 
                 return GetValue(Expression.Member, null);
             }
-        }
 
-        private string GetValue(MemberInfo Member, object Reference)
-        {
-            FieldInfo FieldInfo = Member as FieldInfo;
-            PropertyInfo PropertyInfo = Member as PropertyInfo;
+            string GetValue(MemberInfo Member, object Reference)
+            {
+                FieldInfo FieldInfo = Member as FieldInfo;
+                PropertyInfo PropertyInfo = Member as PropertyInfo;
 
-            return ToDbFormat(FieldInfo?.GetValue(Reference) ?? PropertyInfo.GetValue(Reference), FieldInfo?.FieldType ?? PropertyInfo.PropertyType);
+                return ToDbFormat(FieldInfo?.GetValue(Reference) ?? PropertyInfo.GetValue(Reference), FieldInfo?.FieldType ?? PropertyInfo.PropertyType);
+            }
         }
 
         private string ToDbFormat(object Input, Type Type = null)
@@ -130,12 +123,11 @@ namespace MistyORM.Database.Compilers
 
         private void AppendParameter(string Value)
         {
-            ConditionBuilder.Append($"@{ParameterCounter}");
-            FieldParameterHolder.Add(ParameterCounter.ToString(), new MySqlParameter
+            ConditionBuilder.Append(AddParameter(ParameterCounter.ToString(), new MySqlParameter
             {
-                ParameterName = "@" + ParameterCounter,
+                ParameterName = ParameterCounter.ToString(),
                 Value = Value
-            });
+            }, ParameterType.Condition));
 
             ++ParameterCounter;
         }
