@@ -12,62 +12,62 @@ namespace MistyORM.Database
 {
     public partial class Db
     {
-        public async Task<bool> Any<T>(Expression<Func<T, bool>> Expression = null) where T : TableEntity
+        public async Task<bool> Any<TEntity>(Expression<Func<TEntity, bool>> Expression = null) where TEntity : TableEntity
         {
-            ConditionCompiler Compiler = new ConditionCompiler();
+            CompilerBase<TEntity> Compiler = new ConditionCompiler<TEntity>();
 
             if (Expression != null)
                 Compiler.Compile(Expression);
 
-            DbDataReader Reader = await SelectAsync(QueryBuilder.Count<T>(Expression != null ? Compiler : null), Compiler.ToParameters());
+            DbDataReader Reader = await SelectAsync(QueryBuilder.Count(Compiler), Compiler.ToParameters());
 
             return Reader.HasRows;
         }
 
-        public async Task<uint> Count<T>(Expression<Func<T, bool>> Expression = null) where T : TableEntity
+        public async Task<uint> Count<TEntity>(Expression<Func<TEntity, bool>> Expression = null) where TEntity : TableEntity
         {
-            ConditionCompiler Compiler = new ConditionCompiler();
+            CompilerBase<TEntity> Compiler = new ConditionCompiler<TEntity>();
 
             if (Expression != null)
                 Compiler.Compile(Expression);
 
-            DbDataReader Reader = await SelectAsync(QueryBuilder.Count<T>(Expression != null ? Compiler : null), Compiler.ToParameters());
+            DbDataReader Reader = await SelectAsync(QueryBuilder.Count(Compiler), Compiler.ToParameters());
 
             await Reader.ReadAsync();
 
             return Convert.ToUInt32(Reader[0]);
         }
 
-        public async Task<T> First<T>(Expression<Func<T, bool>> Expression = null) where T : TableEntity, new()
+        public async Task<TEntity> First<TEntity>(Expression<Func<TEntity, bool>> Expression = null) where TEntity : TableEntity, new()
         {
-            ConditionCompiler Compiler = new ConditionCompiler();
+            CompilerBase<TEntity> Compiler = new ConditionCompiler<TEntity>();
 
             if (Expression != null)
                 Compiler.Compile(Expression);
 
-            T[] Result = EntityBuilder.Create<T>(await SelectAsync(QueryBuilder.First<T>(Expression != null ? Compiler : null), Compiler.ToParameters()));
+            TEntity[] Result = EntityBuilder.Create<TEntity>(await SelectAsync(QueryBuilder.First(Compiler), Compiler.ToParameters()));
 
             return Result.Length > 0 ? Result[0] : null;
         }
 
-        public async Task<T[]> Select<T>(Expression<Func<T, bool>> Expression = null) where T : TableEntity, new()
+        public async Task<TEntity[]> Select<TEntity>(Expression<Func<TEntity, bool>> Expression = null) where TEntity : TableEntity, new()
         {
-            ConditionCompiler Compiler = new ConditionCompiler();
+            CompilerBase<TEntity> Compiler = new ConditionCompiler<TEntity>();
 
             if (Expression != null)
                 Compiler.Compile(Expression);
 
-            return EntityBuilder.Create<T>(await SelectAsync(QueryBuilder.Select<T>(Expression != null ? Compiler : null), Compiler.ToParameters()));
+            return EntityBuilder.Create<TEntity>(await SelectAsync(QueryBuilder.Select(Compiler), Compiler.ToParameters()));
         }
 
-        public async Task<T> Single<T>(Expression<Func<T, bool>> Expression = null) where T : TableEntity, new()
+        public async Task<TEntity> Single<TEntity>(Expression<Func<TEntity, bool>> Expression = null) where TEntity : TableEntity, new()
         {
-            ConditionCompiler Compiler = new ConditionCompiler();
+            CompilerBase<TEntity> Compiler = new ConditionCompiler<TEntity>();
 
             if (Expression != null)
                 Compiler.Compile(Expression);
 
-            T[] Result = EntityBuilder.Create<T>(await SelectAsync(QueryBuilder.Select<T>(Expression != null ? Compiler : null), Compiler.ToParameters()));
+            TEntity[] Result = EntityBuilder.Create<TEntity>(await SelectAsync(QueryBuilder.Select(Compiler), Compiler.ToParameters()));
             
             return Result.Length != 1 ? null : Result[0];
         }

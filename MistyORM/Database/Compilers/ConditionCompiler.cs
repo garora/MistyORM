@@ -1,21 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
 using MySql.Data.MySqlClient;
 
+using MistyORM.Entities;
+using MistyORM.Miscellaneous;
+
 namespace MistyORM.Database.Compilers
 {
-    internal class ConditionCompiler : CompilerBase
+    internal class ConditionCompiler<TEntity> : CompilerBase<TEntity> where TEntity : TableEntity
     {
-        private readonly StringBuilder ConditionBuilder;
-        internal new string ToConditionValues() => ConditionBuilder.ToString();
+        internal readonly StringBuilder ConditionBuilder = new StringBuilder();
 
-        private int ParameterCounter;
+        private int ParameterCounter = 1;
 
         private static readonly Dictionary<ExpressionType, string> ExpressionTypeMap = new Dictionary<ExpressionType, string>()
         {
@@ -24,16 +24,22 @@ namespace MistyORM.Database.Compilers
             { ExpressionType.Equal, " = " }
         };
 
-        internal ConditionCompiler() : base()
+        internal ConditionCompiler()
         {
-            ConditionBuilder = new StringBuilder();
-            ParameterCounter = 1;
         }
 
-        internal override void Compile<T>(T Item)
+        protected override void CompileImplementation<T>(T Item)
         {
-            Expression ExpressionBody = Item as Expression;
+            PropertyInfo[] Properties = typeof(TEntity).GetEntityProperties();
 
+            for (int i = 0; i < Properties.Length; ++i)
+                AddParameter(Properties[i].Name, null, ParameterType.Member);
+
+            Visit(Item as Expression);
+        }
+
+        private void Visit(Expression ExpressionBody)
+        {
             if (ExpressionBody is LambdaExpression)
                 ExpressionBody = (ExpressionBody as LambdaExpression).Body;
 
@@ -45,7 +51,7 @@ namespace MistyORM.Database.Compilers
 
                     ConditionBuilder.Append("NOT (");
 
-                    Compile(Expression.Operand);
+                    Visit(Expression.Operand);
 
                     ConditionBuilder.Append(")");
                     break;
@@ -56,11 +62,11 @@ namespace MistyORM.Database.Compilers
 
                     ConditionBuilder.Append("(");
 
-                    Compile(Expression.Left);
+                    Visit(Expression.Left);
 
                     ConditionBuilder.Append(ExpressionTypeMap[ExpressionBody.NodeType]);
 
-                    Compile(Expression.Right);
+                    Visit(Expression.Right);
 
                     ConditionBuilder.Append(")");
                     break;

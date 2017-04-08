@@ -1,21 +1,19 @@
-using System.Linq;
 using System.Text;
 
 using MistyORM.Database.Compilers;
 using MistyORM.Entities;
-using MistyORM.Miscellaneous;
 
 namespace MistyORM.Database.Builders
 {
     internal static partial class QueryBuilder
     {
-        internal static string Count<T>(ConditionCompiler Compiler) where T : TableEntity
+        internal static string Count<TEntity>(CompilerBase<TEntity> Compiler) where TEntity : TableEntity
         {
             StringBuilder Builder = new StringBuilder();
 
-            Builder.Append($"SELECT COUNT(*) FROM `{typeof(T).Name}`");
+            Builder.Append($"SELECT COUNT(*) FROM `{typeof(TEntity).Name}`");
 
-            if (Compiler != null)
+            if (Compiler.Compiled)
                 Builder.Append($" WHERE {Compiler.ToConditionValues()}");
             
             Builder.Append(";");
@@ -23,13 +21,13 @@ namespace MistyORM.Database.Builders
             return Builder.ToString();
         }
 
-        internal static string First<T>(ConditionCompiler Compiler) where T : TableEntity
+        internal static string First<TEntity>(CompilerBase<TEntity> Compiler) where TEntity : TableEntity
         {
             StringBuilder Builder = new StringBuilder();
 
-            Builder.Append($"SELECT * FROM `{typeof(T).Name}`");
+            Builder.Append($"SELECT {Compiler.ToMemberFields()} FROM `{typeof(TEntity).Name}`");
 
-            if (Compiler != null)
+            if (Compiler.Compiled)
                 Builder.Append($" WHERE {Compiler.ToConditionValues()}");
             
             Builder.Append(" LIMIT 0, 1;");
@@ -37,13 +35,13 @@ namespace MistyORM.Database.Builders
             return Builder.ToString();
         }
 
-        internal static string Select<T>(ConditionCompiler Compiler) where T : TableEntity
+        internal static string Select<TEntity>(CompilerBase<TEntity> Compiler) where TEntity : TableEntity
         {
             StringBuilder Builder = new StringBuilder();
 
-            Builder.Append($"SELECT * FROM `{typeof(T).Name}`");
+            Builder.Append($"SELECT {Compiler.ToMemberFields()} FROM `{typeof(TEntity).Name}`");
 
-            if (Compiler != null)
+            if (Compiler.Compiled)
                 Builder.Append($" WHERE {Compiler.ToConditionValues()}");
 
             Builder.Append(";");

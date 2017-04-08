@@ -4,18 +4,24 @@ using System.Linq;
 
 using MySql.Data.MySqlClient;
 
+using MistyORM.Entities;
+
 namespace MistyORM.Database.Compilers
 {
-    internal abstract class CompilerBase
+    internal abstract class CompilerBase<TEntity> where TEntity : TableEntity
     {
-        private IList<(string Name, DbParameter Parameter, ParameterType Type)> Parameters { get; set; }
-
         protected CompilerBase()
         {
-            Parameters = new List<(string, DbParameter, ParameterType)>();
         }
 
-        internal virtual void Compile<T>(T Item)
+        internal void Compile<T>(T Item)
+        {
+            CompileImplementation(Item);
+
+            Compiled = true;
+        }
+
+        protected virtual void CompileImplementation<T>(T Item)
         {
         }
 
@@ -23,8 +29,8 @@ namespace MistyORM.Database.Compilers
         {
             MySqlParameter NewParameter = new MySqlParameter
             {
-                ParameterName = $"@{ParameterAbbreviation[Type]}{Parameter.ParameterName}",
-                Value = Parameter.Value
+                ParameterName = $"@{ParameterAbbreviation[Type]}{Parameter?.ParameterName ?? string.Empty}",
+                Value = Parameter?.Value ?? new object()
             };
 
             Parameters.Add((Name, NewParameter, Type));
@@ -38,7 +44,13 @@ namespace MistyORM.Database.Compilers
         internal string ToMemberFields() => string.Join(", ", Parameters.Where(x => x.Type == ParameterType.Member).Select(x => $"`{x.Name}`"));
         internal string ToMemberValues() => string.Join(", ", Parameters.Where(x => x.Type == ParameterType.Member).Select(x => $"`{x.Name}` = {x.Parameter.ParameterName}"));
 
-        internal string ToConditionValues() => string.Join(", ", Parameters.Where(x => x.Type == ParameterType.Condition).Select(x => $"`{x.Name}` = {x.Parameter.ParameterName}"));
+        internal string ToConditionValues()
+        {
+            if (this is ConditionCompiler<TEntity>)
+                return (this as ConditionCompiler<TEntity>).ConditionBuilder.ToString();
+
+            return string.Join(", ", Parameters.Where(x => x.Type == ParameterType.Condition).Select(x => $"`{x.Name}` = {x.Parameter.ParameterName}"));
+        }
 
         protected enum ParameterType
         {
@@ -46,10 +58,14 @@ namespace MistyORM.Database.Compilers
             Condition = 2
         }
 
-        private Dictionary<ParameterType, char> ParameterAbbreviation = new Dictionary<ParameterType, char>()
+        private readonly Dictionary<ParameterType, char> ParameterAbbreviation = new Dictionary<ParameterType, char>()
         {
             { ParameterType.Condition, 'c' },
             { ParameterType.Member, 'm' }
         };
+
+        private readonly IList<(string Name, DbParameter Parameter, ParameterType Type)> Parameters = new List<(string, DbParameter, ParameterType)>();
+
+        internal bool Compiled = false;
     }
 }

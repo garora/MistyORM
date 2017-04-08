@@ -14,44 +14,44 @@ namespace MistyORM.Database
 {
     public partial class Db
     {
-        public async Task Insert<T>(T Item) where T : TableEntity
+        public async Task Insert<TEntity>(TEntity Item) where TEntity : TableEntity
         {
-            CompilerBase Compiler = new InsertCompiler();
+            CompilerBase<TEntity> Compiler = new InsertCompiler<TEntity>();
 
             Compiler.Compile(Item);
 
-            int ScalarResult = await InsertAsync(QueryBuilder.Insert<T>(Compiler), Compiler.ToParameters());
+            int ScalarResult = await InsertAsync(QueryBuilder.Insert(Compiler), Compiler.ToParameters());
 
-            PropertyInfo AutoIncrementProperty = typeof(T).GetEntityProperties().SingleOrDefault(x => x.GetCustomAttribute<AutoIncrementAttribute>() != null);
+            PropertyInfo AutoIncrementProperty = typeof(TEntity).GetEntityProperties().SingleOrDefault(x => x.GetCustomAttribute<AutoIncrementAttribute>() != null);
             if (AutoIncrementProperty != null)
                 AutoIncrementProperty.SetValue(Item, ScalarResult);
         }
 
-        public async Task<bool> Delete<T>(T Item) where T : TableEntity
+        public async Task<bool> Delete<TEntity>(TEntity Item) where TEntity : TableEntity
         {
-            CompilerBase Compiler = new DeleteCompiler();
+            CompilerBase<TEntity> Compiler = new DeleteCompiler<TEntity>();
 
             Compiler.Compile(Item);
 
-            return await ExecuteAsync(QueryBuilder.Delete<T>(Compiler), Compiler.ToParameters());
+            return await ExecuteAsync(QueryBuilder.Delete(Compiler), Compiler.ToParameters());
         }
 
-        public async Task<bool> Delete<T>(Expression<Func<T, bool>> Expression) where T : TableEntity
+        public async Task<bool> Delete<TEntity>(Expression<Func<TEntity, bool>> Expression) where TEntity : TableEntity
         {
-            ConditionCompiler Compiler = new ConditionCompiler();
+            CompilerBase<TEntity> Compiler = new ConditionCompiler<TEntity>();
 
             Compiler.Compile(Expression);
 
-            return await ExecuteAsync(QueryBuilder.Delete<T>(Compiler), Compiler.ToParameters());
+            return await ExecuteAsync(QueryBuilder.Delete(Compiler), Compiler.ToParameters());
         }
 
-        public async Task<bool> Update<T>(T Item) where T : TableEntity
+        public async Task<bool> Update<TEntity>(TEntity Item) where TEntity : TableEntity
         {
-            CompilerBase Compiler = new UpdateCompiler();
+            CompilerBase<TEntity> Compiler = new UpdateCompiler<TEntity>();
 
             Compiler.Compile(Item);
 
-            return await ExecuteAsync(QueryBuilder.Update<T>(Compiler), Compiler.ToParameters());
+            return await ExecuteAsync(QueryBuilder.Update(Compiler), Compiler.ToParameters());
         }
     }
 }

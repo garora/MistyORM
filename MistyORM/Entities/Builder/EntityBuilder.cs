@@ -8,15 +8,15 @@ namespace MistyORM.Entities.Builder
 {
     internal static class EntityBuilder
     {
-        internal static T[] Create<T>(DbDataReader Reader) where T : TableEntity, new()
+        internal static TEntity[] Create<TEntity>(DbDataReader Reader) where TEntity : TableEntity, new()
         {
-            List<T> Result = new List<T>();
+            List<TEntity> Result = new List<TEntity>();
 
-            PropertyInfo[] Properties = typeof(T).GetEntityProperties();
+            PropertyInfo[] Properties = typeof(TEntity).GetEntityProperties();
 
             while (Reader.Read())
             {
-                T Row = new T();
+                TEntity Row = new TEntity();
 
                 foreach (PropertyInfo Info in Properties)
                     Info.SetValue(Row, Reader[Info.Name]);
