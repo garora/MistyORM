@@ -27,18 +27,25 @@ namespace MistyORM.Database.Compilers
 
         protected string AddParameter(string Name, DbParameter Parameter, ParameterType Type)
         {
-            MySqlParameter NewParameter = new MySqlParameter
+            if (Parameter != null)
             {
-                ParameterName = $"@{ParameterAbbreviation[Type]}{Parameter?.ParameterName ?? string.Empty}",
-                Value = Parameter?.Value ?? new object()
-            };
+                MySqlParameter NewParameter = new MySqlParameter
+                {
+                    ParameterName = $"@{ParameterAbbreviation[Type]}{Parameter.ParameterName}",
+                    Value = Parameter.Value
+                };
 
-            Parameters.Add((Name, NewParameter, Type));
+                Parameters.Add((Name, NewParameter, Type));
 
-            return NewParameter.ParameterName;
+                return NewParameter.ParameterName;
+            }
+
+            Parameters.Add((Name, null, Type));
+
+            return string.Empty;
         }
 
-        internal IEnumerable<DbParameter> ToParameters() => Parameters.Select(x => x.Parameter);
+        internal IEnumerable<DbParameter> ToParameters() => Parameters.Where(x => x.Parameter != null).Select(x => x.Parameter);
 
         internal string ToMemberParameters() => string.Join(", ", Parameters.Where(x => x.Type == ParameterType.Member).Select(x => $"{x.Parameter.ParameterName}"));
         internal string ToMemberFields() => string.Join(", ", Parameters.Where(x => x.Type == ParameterType.Member).Select(x => $"`{x.Name}`"));
