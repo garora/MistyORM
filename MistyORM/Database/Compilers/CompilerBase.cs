@@ -10,6 +10,8 @@ namespace MistyORM.Database.Compilers
 {
     internal abstract class CompilerBase<TEntity> where TEntity : TableEntity
     {
+        // to be rewritten...
+        
         protected CompilerBase()
         {
         }
@@ -45,7 +47,7 @@ namespace MistyORM.Database.Compilers
             return string.Empty;
         }
 
-        internal IEnumerable<DbParameter> ToParameters() => Parameters.Where(x => x.Parameter != null).Select(x => x.Parameter);
+        internal DbParameter[] ToParameters() => Parameters.Where(x => x.Parameter != null).Select(x => x.Parameter).ToArray();
 
         internal string ToMemberParameters() => string.Join(", ", Parameters.Where(x => x.Type == ParameterType.Member).Select(x => $"{x.Parameter.ParameterName}"));
         internal string ToMemberFields() => string.Join(", ", Parameters.Where(x => x.Type == ParameterType.Member).Select(x => $"`{x.Name}`"));
