@@ -20,12 +20,11 @@ namespace MistyORM.Server
 
     public sealed class DbServer
     {
-        private readonly ConcurrentDictionary<Type, Db> DbStorage;
+        private readonly ConcurrentDictionary<Type, Db> DbStorage = new ConcurrentDictionary<Type, Db>();
         private readonly DbServerInfo ServerInfo;
 
         public DbServer(DbServerInfo Info)
         {
-            DbStorage = new ConcurrentDictionary<Type, Db>();
             ServerInfo = Info;
         }
 

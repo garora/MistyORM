@@ -2,6 +2,6 @@ namespace MistyORM.Managers
 {
     internal class Manager
     {
-        internal static CacheManager Cache => CacheManager.Instance;
+        public static CacheManager Cache => CacheManager.Instance;
     }
 }

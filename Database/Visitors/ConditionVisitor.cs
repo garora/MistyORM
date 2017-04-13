@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -6,39 +6,28 @@ using System.Text;
 
 using MySql.Data.MySqlClient;
 
-using MistyORM.Entities;
-using MistyORM.Miscellaneous;
-
-namespace MistyORM.Database.Compilers
+namespace MistyORM.Database.Visitors
 {
-    internal class ConditionCompiler<TEntity> : CompilerBase<TEntity> where TEntity : TableEntity
+    // todo: implement as ExpressionVisitor
+    internal sealed class ConditionVisitor
     {
-        internal readonly StringBuilder ConditionBuilder = new StringBuilder();
+        public MySqlParameter[] GetParameters() => ParameterHolder.ToArray();
+        private readonly List<MySqlParameter> ParameterHolder;
 
-        private int ParameterCounter = 1;
+        private int ParameterIdentifier;
 
-        private static readonly Dictionary<ExpressionType, string> ExpressionTypeMap = new Dictionary<ExpressionType, string>()
+        public string GetConditions() => ConditionBuilder.ToString();
+        private readonly StringBuilder ConditionBuilder;
+
+        public ConditionVisitor()
         {
-            { ExpressionType.AndAlso, " AND " },
-            { ExpressionType.OrElse, " OR " },
-            { ExpressionType.Equal, " = " }
-        };
+            ParameterHolder = new List<MySqlParameter>();
+            ParameterIdentifier = 0;
 
-        internal ConditionCompiler()
-        {
+            ConditionBuilder = new StringBuilder();
         }
 
-        protected override void CompileImplementation<T>(T Item)
-        {
-            PropertyInfo[] Properties = typeof(TEntity).GetEntityProperties();
-
-            for (int i = 0; i < Properties.Length; ++i)
-                AddParameter(Properties[i].Name, null, ParameterType.Member);
-
-            Visit(Item as Expression);
-        }
-
-        private void Visit(Expression ExpressionBody)
+        public void Visit(Expression ExpressionBody)
         {
             if (ExpressionBody is LambdaExpression)
                 ExpressionBody = (ExpressionBody as LambdaExpression).Body;
@@ -113,7 +102,7 @@ namespace MistyORM.Database.Compilers
                 FieldInfo FieldInfo = Member as FieldInfo;
                 PropertyInfo PropertyInfo = Member as PropertyInfo;
 
-                return ToDbFormat(FieldInfo?.GetValue(Reference) ?? PropertyInfo.GetValue(Reference), FieldInfo?.FieldType ?? PropertyInfo.PropertyType);
+                return ToDbFormat(FieldInfo?.GetValue(Reference) ?? PropertyInfo.GetValue(Reference), FieldInfo?.FieldType ?? PropertyInfo.PropertyType); 
             }
         }
 
@@ -129,13 +118,12 @@ namespace MistyORM.Database.Compilers
 
         private void AppendParameter(string Value)
         {
-            ConditionBuilder.Append(AddParameter(ParameterCounter.ToString(), new MySqlParameter
+            ConditionBuilder.Append($"@{++ParameterIdentifier}");
+            ParameterHolder.Add(new MySqlParameter
             {
-                ParameterName = ParameterCounter.ToString(),
+                ParameterName = "@" + ParameterIdentifier,
                 Value = Value
-            }, ParameterType.Condition));
-
-            ++ParameterCounter;
+            });
         }
 
         private VisitType GetVisitDispatcher(Expression Expression)
@@ -157,7 +145,14 @@ namespace MistyORM.Database.Compilers
             }
         }
 
-        private enum VisitType
+        private static readonly IDictionary<ExpressionType, string> ExpressionTypeMap = new Dictionary<ExpressionType, string>() 
+        {
+            { ExpressionType.AndAlso, " AND " },
+            { ExpressionType.OrElse, " OR " },
+            { ExpressionType.Equal, " = " }
+        };
+
+        private enum VisitType : byte
         {
             None = 0,
             Unary = 1,
