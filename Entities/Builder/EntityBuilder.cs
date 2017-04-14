@@ -10,9 +10,6 @@ namespace MistyORM.Entities.Builder
     {
         public static IEnumerable<TEntity> Create<TEntity>(DbDataReader Reader) where TEntity : TableEntity, new()
         {
-
-            System.Console.WriteLine("xxxyy"); 
-
             IEnumerable<DBTableField> Fields = Manager.Cache.GetFields<TEntity>();
 
             while (Reader.Read())

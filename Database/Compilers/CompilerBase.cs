@@ -5,21 +5,20 @@ using System.Linq.Expressions;
 
 using MySql.Data.MySqlClient;
 
-using MistyORM.Entities;
 using MistyORM.Database.Visitors;
-using MistyORM.Miscellaneous;
+using MistyORM.Entities;
 
 namespace MistyORM.Database.Compilers
 {
     internal abstract class CompilerBase<TEntity> where TEntity : TableEntity
     {
         public bool Compiled { get; private set; } = false;
+        public bool Visited { get; private set; } = false;
 
         protected readonly IDictionary<string, MySqlParameter> FieldValueMap = new Dictionary<string, MySqlParameter>();
         protected (string Field, MySqlParameter Parameter) SingleCondition;
 
         protected ConditionVisitor Visitor;
-        public bool Visited { get; private set; } = false;
 
         protected int ParameterIdentifier = 0;
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -8,10 +8,9 @@ using MySql.Data.MySqlClient;
 
 namespace MistyORM.Database.Visitors
 {
-    // todo: implement as ExpressionVisitor
-    internal sealed class ConditionVisitor
+    internal sealed class ConditionVisitor : ExpressionVisitor
     {
-        public MySqlParameter[] GetParameters() => ParameterHolder.ToArray();
+        public IEnumerable<MySqlParameter> GetParameters() => ParameterHolder;
         private readonly List<MySqlParameter> ParameterHolder;
 
         private int ParameterIdentifier;
@@ -27,57 +26,52 @@ namespace MistyORM.Database.Visitors
             ConditionBuilder = new StringBuilder();
         }
 
-        public void Visit(Expression ExpressionBody)
+        protected override Expression VisitUnary(UnaryExpression Expression)
         {
-            if (ExpressionBody is LambdaExpression)
-                ExpressionBody = (ExpressionBody as LambdaExpression).Body;
+            ConditionBuilder.Append("NOT (");
 
-            switch (GetVisitDispatcher(ExpressionBody))
-            {
-                case VisitType.Unary:
-                {
-                    UnaryExpression Expression = ExpressionBody as UnaryExpression;
+            Visit(Expression.Operand);
 
-                    ConditionBuilder.Append("NOT (");
+            ConditionBuilder.Append(")");
 
-                    Visit(Expression.Operand);
+            return Expression;
+        }
 
-                    ConditionBuilder.Append(")");
-                    break;
-                }
-                case VisitType.Binary:
-                {
-                    BinaryExpression Expression = ExpressionBody as BinaryExpression;
+        protected override Expression VisitBinary(BinaryExpression Expression)
+        {
+            ConditionBuilder.Append("(");
 
-                    ConditionBuilder.Append("(");
+            Visit(Expression.Left);
 
-                    Visit(Expression.Left);
+            ConditionBuilder.Append(ExpressionTypeMap[Expression.NodeType]);
 
-                    ConditionBuilder.Append(ExpressionTypeMap[ExpressionBody.NodeType]);
+            Visit(Expression.Right);
 
-                    Visit(Expression.Right);
+            ConditionBuilder.Append(")");
 
-                    ConditionBuilder.Append(")");
-                    break;
-                }
-                case VisitType.Member:
-                {
-                    MemberExpression Expression = ExpressionBody as MemberExpression;
+            return Expression;
+        }
 
-                    if (Expression.Expression != null && Expression.Expression.NodeType == ExpressionType.Parameter)
-                        ConditionBuilder.Append($"`{Expression.Member.Name}`");
-                    else
-                        AppendParameter(GetMemberExpressionValue(Expression));
-                    break;
-                }
-                case VisitType.Constant:
-                {
-                    ConstantExpression Expression = ExpressionBody as ConstantExpression;
+        protected override Expression VisitMember(MemberExpression Expression)
+        {
+            if (Expression.Expression != null && Expression.Expression.NodeType == ExpressionType.Parameter)
+                ConditionBuilder.Append($"`{Expression.Member.Name}`");
+            else
+                AppendParameter(GetMemberExpressionValue(Expression));
 
-                    AppendParameter((Expression.Value ?? string.Empty).ToString());
-                    break;
-                }
-            }
+            return Expression;
+        }
+
+        protected override Expression VisitConstant(ConstantExpression Expression)
+        {
+            AppendParameter((Expression.Value ?? string.Empty).ToString());
+
+            return Expression;
+        }
+
+        protected override Expression VisitMethodCall(MethodCallExpression Expression)
+        {
+            throw new NotImplementedException("Visity type 'Call' is not implemented.");
         }
 
         private string GetMemberExpressionValue(MemberExpression Expression)
@@ -102,7 +96,7 @@ namespace MistyORM.Database.Visitors
                 FieldInfo FieldInfo = Member as FieldInfo;
                 PropertyInfo PropertyInfo = Member as PropertyInfo;
 
-                return ToDbFormat(FieldInfo?.GetValue(Reference) ?? PropertyInfo.GetValue(Reference), FieldInfo?.FieldType ?? PropertyInfo.PropertyType); 
+                return ToDbFormat(FieldInfo?.GetValue(Reference) ?? PropertyInfo.GetValue(Reference), FieldInfo?.FieldType ?? PropertyInfo.PropertyType);
             }
         }
 
@@ -126,40 +120,12 @@ namespace MistyORM.Database.Visitors
             });
         }
 
-        private VisitType GetVisitDispatcher(Expression Expression)
+        private static readonly IDictionary<ExpressionType, string> ExpressionTypeMap = new Dictionary<ExpressionType, string>()
         {
-            switch (Expression.NodeType)
-            {
-                case ExpressionType.Not:
-                    return VisitType.Unary;
-                case ExpressionType.AndAlso:
-                case ExpressionType.OrElse:
-                case ExpressionType.Equal:
-                    return VisitType.Binary;
-                case ExpressionType.MemberAccess:
-                    return VisitType.Member;
-                case ExpressionType.Constant:
-                    return VisitType.Constant;
-                default:
-                    throw new NotSupportedException($"{Expression.NodeType} is not supported.");
-            }
-        }
-
-        private static readonly IDictionary<ExpressionType, string> ExpressionTypeMap = new Dictionary<ExpressionType, string>() 
-        {
+            // todo: implement everything else
             { ExpressionType.AndAlso, " AND " },
             { ExpressionType.OrElse, " OR " },
-            { ExpressionType.Equal, " = " }
+            { ExpressionType.Equal, " = " },
         };
-
-        private enum VisitType : byte
-        {
-            None = 0,
-            Unary = 1,
-            Binary = 2,
-            Member = 3,
-            Constant = 4,
-            Call = 5
-        }
     }
 }

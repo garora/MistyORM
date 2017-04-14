@@ -15,8 +15,6 @@ namespace MistyORM.Database.Compilers
 
         protected override void CompilerImplementation(TEntity Entity)
         {
-            // todo: handle expression in argument
-            
             DBTableField PrimaryField = Manager.Cache.GetFields<TEntity>().SingleOrDefault(x => x.IsPrimaryKey);
 
             SingleCondition = (PrimaryField.Name, new MySqlParameter

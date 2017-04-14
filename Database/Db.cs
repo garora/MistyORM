@@ -46,6 +46,8 @@ namespace MistyORM.Database
 
             Command.Parameters.AddRange(Parameters.Where(x => x != null).ToArray());
 
+            Logger.Out($"Command created: {Sql}");
+
             return Command;
         }
 
